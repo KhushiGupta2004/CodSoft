@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>To-Do App</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="container" id="welcome-screen">
+    <header>
+      <div class="play-icon">▶</div>
+      <span class="how-it-works">How it <span class="highlight">works</span></span>
+    </header>
+
+    <div class="illustration">
+      <img src="https://cdn-icons-png.flaticon.com/512/5904/5904781.png" alt="Task Illustration" />
+    </div>
+
+    <h1>Manage Your<br><span class="accent">Everyday Tasks</span></h1>
+    <p class="description">
+      Stay organized and increase productivity by tracking your daily goals.
+    </p>
+
+    <button onclick="showToDoApp()" class="get-started">Get Started</button>
+  </div>
+
+  <!-- To-Do Section -->
+  <div id="todo-app" class="todo-app hidden">
+    <h2>📝 Today's Tasks</h2>
+    <div class="todo-input">
+      <input type="text" id="taskInput" placeholder="Enter a task..." />
+      <input type="time" id="taskTime" /> <!-- 24-hour time input -->
+      <button onclick="addTask()">Add</button>
+    </div>
+    
+    <!-- Ongoing Task Section -->
+    <div id="ongoing-task-section">
+      <h3>Ongoing Task</h3>
+      <div id="ongoing-task" class="ongoing-task-empty">No ongoing task</div>
+    </div>
+
+    <ul id="taskList"></ul>
+  </div>
+
+  <!-- User Details Popup -->
+  <div id="userPopup" class="popup-overlay hidden">
+    <div class="popup-box">
+      <h3>Enter Your Details</h3>
+      <input type="text" id="usernameInput" placeholder="Username" />
+      <input type="email" id="emailInput" placeholder="Email ID" />
+      <div style="margin-top:20px;">
+        <button id="userSubmitBtn">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

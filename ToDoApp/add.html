@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>To-Do Android App</title>
+  <link rel="stylesheet" href="addC.css"/>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar">
+      <ul>
+        <li>👤 Profile</li>
+        <li id="manageTasksBtn">📝 Manage Tasks</li>
+        <ul id="sidebarTaskList" style="display:none; margin-left:20px;"></ul>
+        <li id="previousTasksBtn">📋 Previous Tasks</li>
+        <ul id="previousTasksList" style="display:none; margin-left:20px;"></ul>
+        <li>🚪 Logout</li>
+      </ul>
+    </div>
+
+    <!-- View/Edit Popup -->
+    <div id="popup" class="popup">
+      <div class="popup-content">
+        <span class="close-btn" onclick="closePopup()">&times;</span>
+        <h3 id="popupTitleDisplay"></h3>
+        <p id="popupDescDisplay"></p>
+        <p id="popupTimeDisplay"></p>
+
+        <div id="popupEditForm" class="hidden">
+          <input id="editTitle" type="text" placeholder="Title" />
+          <input id="editDesc" type="text" placeholder="Description" />
+          <input id="editDate" type="date" />
+          <input id="editTime" type="text" placeholder="Time (e.g., 02:00 PM)" />
+          <button onclick="saveTask()">💾 Save</button>
+        </div>
+
+        <button id="editBtn" onclick="editTask()">✏️ Edit</button>
+      </div>
+    </div>
+
+    <!-- Add Task Popup -->
+    <div id="addPopup" class="popup">
+      <div class="popup-content">
+        <span class="close-btn" onclick="closeAddPopup()">&times;</span>
+        <h3>Add New Task</h3>
+        <input id="newTitle" type="text" placeholder="Task Title" />
+        <input id="newDesc" type="text" placeholder="Task Description" />
+        <input id="newDate" type="date" />
+        <input id="newTime" type="text" pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$" placeholder="Starting Time (hh:mm:ss)" />
+        <input id="newDuration" type="text" pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$" placeholder="Set Duration (hh:mm:ss)" />
+        <button onclick="submitNewTask()">✅ Add Task</button>
+      </div>
+    </div>
+
+    <!-- User Profile Popup -->
+    <div id="profilePopup" class="popup">
+      <div class="popup-content">
+        <span class="close-btn" onclick="closeProfilePopup()">&times;</span>
+        <h3>User Profile</h3>
+        <p><strong>Name:</strong> <span id="profileName"></span></p>
+        <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+      </div>
+    </div>
+
+    <!-- Logout Confirmation Popup -->
+    <div id="logoutPopup" class="popup">
+      <div class="popup-content" style="text-align:center;">
+        <h3>Do you want to logout?</h3>
+        <div style="margin-top:30px;">
+          <button id="logoutYesBtn" style="margin-right:20px;">Yes</button>
+          <button id="logoutNoBtn">No</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly Tasks Popup -->
+    <div id="weeklyPopup" class="popup">
+      <div class="popup-content" style="max-width: 400px; max-height: 80vh; overflow-y: auto;">
+        <span class="close-btn" onclick="closeWeeklyPopup()">&times;</span>
+        <h3>This Week's Tasks</h3>
+        <div id="weeklyTaskList"></div>
+      </div>
+    </div>
+
+    <!-- Monthly Tasks Popup -->
+    <div id="monthlyPopup" class="popup">
+      <div class="popup-content" style="max-width: 400px; max-height: 80vh; overflow-y: auto;">
+        <span class="close-btn" onclick="closeMonthlyPopup()">&times;</span>
+        <h3>This Month's Tasks</h3>
+        <div id="monthlyTaskList"></div>
+      </div>
+    </div>
+
+    <!-- Yearly Tasks Popup -->
+    <div id="yearlyPopup" class="popup">
+      <div class="popup-content" style="max-width: 400px; max-height: 80vh; overflow-y: auto;">
+        <span class="close-btn" onclick="closeYearlyPopup()">&times;</span>
+        <h3>This Year's Tasks</h3>
+        <div id="yearlyTaskList"></div>
+      </div>
+    </div>
+
+    <!-- Completed Tasks Popup -->
+    <div id="completedPopup" class="popup">
+      <div class="popup-content" style="max-width: 400px; max-height: 80vh; overflow-y: auto;">
+        <span class="close-btn" onclick="closeCompletedPopup()">&times;</span>
+        <h3>Completed Tasks</h3>
+        <div id="completedTaskList"></div>
+      </div>
+    </div>
+
+    <!-- Incompleted Tasks Popup -->
+    <div id="incompletedPopup" class="popup">
+      <div class="popup-content" style="max-width: 400px; max-height: 80vh; overflow-y: auto;">
+        <span class="close-btn" onclick="closeIncompletedPopup()">&times;</span>
+        <h3>Incompleted Tasks</h3>
+        <div id="incompletedTaskList"></div>
+      </div>
+    </div>
+
+    <!-- Main UI -->
+    <header>
+      <div class="menu-icon" onclick="toggleSidebar()">☰</div>
+      <div class="header-right">
+      </div>
+    </header>
+
+    <section class="greeting">
+      <h2>Hello <span id="greetingName"></span></h2>
+      <p><span id="pendingCount"></span> Pending Tasks...</p>
+    </section>
+
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search Tasks"/>
+      <button onclick="searchTasks()">🔍</button>
+    </div>
+
+    <section class="ongoing-task">
+      <h3>Ongoing Task</h3>
+      <div id="ongoingTaskCard" class="task-card">
+        <!-- Content will be dynamically populated -->
+      </div>
+    </section>
+
+    <section class="today-task">
+      <div class="task-header">
+        <h3>Today's Task</h3>
+        <span class="see-all">See All</span>
+      </div>
+      <div class="task-list" id="taskList"></div>
+    </section>
+
+    <button class="add-btn" onclick="openAddPopup()">Add New Task</button>
+  </div>
+
+  <script>
+    const taskList = document.getElementById("taskList");
+    const sidebar = document.getElementById("sidebar");
+
+    // Load tasks from localStorage or use default tasks
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [
+      { title: "Lunch with client", desc: "Ask Secretary", date: new Date().toISOString().split('T')[0], time: "10:30 AM" },
+      { title: "Check Emails", desc: "Open PC", date: new Date().toISOString().split('T')[0], time: "01:45 PM" },
+      { title: "Team Meeting", desc: "Weekly standup", date: new Date().toISOString().split('T')[0], time: "09:00 AM" }
+    ];
+    
+    // Add some sample tasks for the current week, month, and year
+    function addSampleWeeklyTasks() {
+      const today = new Date();
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - today.getDay());
+      
+      // Add tasks for different days of the week
+      const weeklyTasks = [
+        { title: "Project Review", desc: "Review Q1 progress", date: new Date(startOfWeek.getTime() + 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], time: "02:00 PM" },
+        { title: "Client Call", desc: "Discuss new requirements", date: new Date(startOfWeek.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], time: "11:00 AM" },
+        { title: "Code Review", desc: "Review pull requests", date: new Date(startOfWeek.getTime() + 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], time: "03:30 PM" },
+        { title: "Weekend Planning", desc: "Plan next week tasks", date: new Date(startOfWeek.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], time: "04:00 PM" }
+      ];
+      
+      // Add tasks for different days of the month
+      const monthlyTasks = [
+        { title: "Monthly Budget Review", desc: "Review and plan budget", date: new Date(today.getFullYear(), today.getMonth(), 15).toISOString().split('T')[0], time: "10:00 AM" },
+        { title: "Team Building Event", desc: "Monthly team activity", date: new Date(today.getFullYear(), today.getMonth(), 20).toISOString().split('T')[0], time: "02:00 PM" },
+        { title: "Performance Review", desc: "Monthly performance check", date: new Date(today.getFullYear(), today.getMonth(), 25).toISOString().split('T')[0], time: "03:30 PM" },
+        { title: "Monthly Report", desc: "Prepare monthly summary", date: new Date(today.getFullYear(), today.getMonth(), 28).toISOString().split('T')[0], time: "11:00 AM" }
+      ];
+      
+      // Add tasks for different months of the year
+      const yearlyTasks = [
+        { title: "Annual Strategy Meeting", desc: "Plan company strategy for the year", date: new Date(today.getFullYear(), 2, 15).toISOString().split('T')[0], time: "09:00 AM" },
+        { title: "Q2 Quarterly Review", desc: "Review Q2 performance and goals", date: new Date(today.getFullYear(), 5, 30).toISOString().split('T')[0], time: "02:00 PM" },
+        { title: "Summer Team Retreat", desc: "Annual team building retreat", date: new Date(today.getFullYear(), 7, 15).toISOString().split('T')[0], time: "10:00 AM" },
+        { title: "Q3 Quarterly Review", desc: "Review Q3 performance and goals", date: new Date(today.getFullYear(), 8, 30).toISOString().split('T')[0], time: "02:00 PM" },
+        { title: "Annual Budget Planning", desc: "Plan budget for next year", date: new Date(today.getFullYear(), 10, 15).toISOString().split('T')[0], time: "11:00 AM" },
+        { title: "Year-End Review", desc: "Annual performance and goal review", date: new Date(today.getFullYear(), 11, 20).toISOString().split('T')[0], time: "03:00 PM" }
+      ];
+      
+      tasks.push(...weeklyTasks, ...monthlyTasks, ...yearlyTasks);
+    }
+
+    let currentEditIndex = null;
+
+    // Function to save tasks to localStorage
+    function saveTasksToStorage() {
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    function updatePendingCount() {
+      // Count only non-completed and non-expired tasks
+      const now = new Date();
+      const currentDate = now.toISOString().split('T')[0];
+      const currentTime = now.toTimeString().split(' ')[0];
+      
+      const pendingTasks = tasks.filter(task => {
+        if (task.completed) return false; // Skip completed tasks
+        
+        // Skip expired incomplete tasks
+        if (task.date === currentDate) {
+          // Check if task time has passed
+          const taskTime = task.time;
+          let taskTime24 = taskTime;
+          if (taskTime.includes('PM') && !taskTime.includes('12')) {
+            const hour = parseInt(taskTime.split(':')[0]) + 12;
+            taskTime24 = hour + ':' + taskTime.split(':')[1].split(' ')[0] + ':00';
+          } else if (taskTime.includes('AM') && taskTime.includes('12')) {
+            taskTime24 = '00:' + taskTime.split(':')[1].split(' ')[0] + ':00';
+          } else if (taskTime.includes('AM')) {
+            taskTime24 = taskTime.split(' ')[0] + ':00';
+          } else if (taskTime.includes('PM') && taskTime.includes('12')) {
+            taskTime24 = '12:' + taskTime.split(':')[1].split(' ')[0] + ':00';
+          }
+          
+          if (taskTime24 < currentTime) return false; // Skip expired tasks
+        } else if (task.date < currentDate) {
+          return false; // Skip past tasks
+        }
+        
+        return true; // Include active tasks
+      });
+      
+      document.getElementById("pendingCount").textContent = pendingTasks.length;
+      updateOngoingTask(); // Also update ongoing task when pending count changes
+    }
+
+    function updateOngoingTask() {
+      const ongoingTaskCard = document.getElementById("ongoingTaskCard");
+      const now = new Date();
+      const currentDate = now.toISOString().split('T')[0];
+      const currentTime = now.toTimeString().split(' ')[0]; // HH:MM:SS format
+      
+      // Filter today's non-completed and non-expired tasks
+      const todaysTasks = tasks.filter(task => {
+        if (task.date !== currentDate) return false;
+        if (task.completed) return false;
+        
+        // Skip expired tasks
+        const taskTime = task.time;
+        let taskTime24 = taskTime;
+        if (taskTime.includes('PM') && !taskTime.includes('12')) {
+          const hour = parseInt(taskTime.split(':')[0]) + 12;
+          taskTime24 = hour + ':' + taskTime.split(':')[1].split(' ')[0] + ':00';
+        } else if (taskTime.includes('AM') && taskTime.includes('12')) {
+          taskTime24 = '00:' + taskTime.split(':')[1].split(' ')[0] + ':00';
+        } else if (taskTime.includes('AM')) {
+          taskTime24 = taskTime.split(' ')[0] + ':00';
+        } else if (taskTime.includes('PM') && taskTime.includes('12')) {
+          taskTime24 = '12:' + taskTime.split(':')[1].split(' ')[0] + ':00';
+        }
+        
+        // Only include non-expired tasks
+        return taskTime24 >= currentTime;
+      });
+      
+      // Find the currently ongoing task
+      let ongoingTask = null;
+      
+      for (let task of todaysTasks) {
+        // Convert task time to 24-hour format for comparison
+        let taskTime24 = task.time;
+        if (task.time.includes('PM') && !task.time.includes('12')) {
+          const hour = parseInt(task.time.split(':')[0]) + 12;
+          taskTime24 = hour + ':' + task.time.split(':')[1].split(' ')[0] + ':00';
+        } else if (task.time.includes('AM') && task.time.includes('12')) {
+          taskTime24 = '00:' + task.time.split(':')[1].split(' ')[0] + ':00';
+        } else if (task.time.includes('AM')) {
+          taskTime24 = task.time.split(' ')[0] + ':00';
+        } else if (task.time.includes('PM') && task.time.includes('12')) {
+          taskTime24 = '12:' + task.time.split(':')[1].split(' ')[0] + ':00';
+        }
+        
+        // Check if current time is at or after the task start time (ongoing period)
+        const taskTime = new Date(`2000-01-01T${taskTime24}`);
+        const currentTimeObj = new Date(`2000-01-01T${currentTime}`);
+        
+        // Task is ongoing if current time is at or after the start time
+        if (currentTimeObj >= taskTime) {
+          ongoingTask = task;
+          break;
+        }
+      }
+      
+      if (ongoingTask) {
+        // Calculate progress based on time elapsed
+        let taskTime24 = ongoingTask.time;
+        if (ongoingTask.time.includes('PM') && !ongoingTask.time.includes('12')) {
+          const hour = parseInt(ongoingTask.time.split(':')[0]) + 12;
+          taskTime24 = hour + ':' + ongoingTask.time.split(':')[1].split(' ')[0] + ':00';
+        } else if (ongoingTask.time.includes('AM') && ongoingTask.time.includes('12')) {
+          taskTime24 = '00:' + ongoingTask.time.split(':')[1].split(' ')[0] + ':00';
+        } else if (ongoingTask.time.includes('AM')) {
+          taskTime24 = ongoingTask.time.split(' ')[0] + ':00';
+        } else if (ongoingTask.time.includes('PM') && ongoingTask.time.includes('12')) {
+          taskTime24 = '12:' + ongoingTask.time.split(':')[1].split(' ')[0] + ':00';
+        }
+        
+        const taskTime = new Date(`2000-01-01T${taskTime24}`);
+        const currentTimeObj = new Date(`2000-01-01T${currentTime}`);
+        const timeDiff = Math.abs(currentTimeObj - taskTime) / (1000 * 60 * 60); // Difference in hours
+        const progress = Math.min(Math.round((timeDiff / 2) * 100), 100); // Progress based on 2-hour window
+        
+        ongoingTaskCard.innerHTML = `
+          <div class="task-info">
+            <span class="days-left">Today</span>
+            <h4>${ongoingTask.title}</h4>
+            <p class="team">${ongoingTask.desc}</p>
+            <div class="time">🕒 ${ongoingTask.time}</div>
+          </div>
+          <div class="rocket-image">🚀</div>
+        `;
+      } else {
+        // No ongoing task
+        ongoingTaskCard.innerHTML = `
+          <div class="task-info" style="text-align: center; width: 100%;">
+            <h4 style="color: #666; margin: 20px 0;">No ongoing Task</h4>
+            <p style="color: #999; font-size: 14px;">No tasks are currently in progress</p>
+          </div>
+        `;
+      }
+    }
+
+    function deleteExpiredTasks() {
+      const now = new Date();
+      const currentDate = now.toISOString().split('T')[0];
+      const currentTime = now.toTimeString().split(' ')[0]; // HH:MM:SS format
+      
+      // Only delete tasks that expired AFTER the program started running
+      // We'll only delete tasks that expire during the current session
+      const expiredTasks = tasks.filter(task => {
+        const taskDate = task.date;
+        const taskTime = task.time;
+        
+        // Skip tasks that were already expired when the program started
+        // Only consider tasks that expire during the current session
+        
+        // If task date is today, check if time has passed during this session
+        if (taskDate === currentDate) {
+          // Convert task time to 24-hour format for comparison
+          let taskTime24 = taskTime;
+          if (taskTime.includes('PM') && !taskTime.includes('12')) {
+            const hour = parseInt(taskTime.split(':')[0]) + 12;
+            taskTime24 = hour + ':' + taskTime.split(':')[1].split(' ')[0] + ':00';
+          } else if (taskTime.includes('AM') && taskTime.includes('12')) {
+            taskTime24 = '00:' + taskTime.split(':')[1].split(' ')[0] + ':00';
+          } else if (taskTime.includes('AM')) {
+            taskTime24 = taskTime.split(' ')[0] + ':00';
+          } else if (taskTime.includes('PM') && taskTime.includes('12')) {
+            taskTime24 = '12:' + taskTime.split(':')[1].split(' ')[0] + ':00';
+          }
+          
+          // Only delete if the task time has passed during this session
+          // This means we don't delete tasks that were already expired when the program started
+          return taskTime24 < currentTime;
+        }
+        
+        // Don't delete tasks from past dates - they should remain for reference
+        return false;
+      });
+      
+      // Remove expired tasks
+      if (expiredTasks.length > 0) {
+        expiredTasks.forEach(expiredTask => {
+          const index = tasks.indexOf(expiredTask);
+          if (index > -1) {
+            tasks.splice(index, 1);
+          }
+        });
+        
+        // Save to localStorage and refresh the display
+        saveTasksToStorage();
+        loadTasks();
+        updatePendingCount();
+        
+        // Show notification if tasks were deleted
+        if (expiredTasks.length > 0) {
+          showNotification(`${expiredTasks.length} expired task${expiredTasks.length > 1 ? 's' : ''} automatically deleted`);
+        }
+      }
+    }
+
+    function sortTasksByDateTime(taskArray) {
+  return [...taskArray].sort((a, b) => {
+    // Compare date first
+    const dateA = new Date(a.date + 'T' + (a.time ? a.time.split(' ')[0] : '00:00:00'));
+    const dateB = new Date(b.date + 'T' + (b.time ? b.time.split(' ')[0] : '00:00:00'));
+    return dateA - dateB;
+  });
+}
+
+function loadTasks() {
+  taskList.innerHTML = "";
+
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0];
+  const currentTime = new Date().toTimeString().split(' ')[0];
+
+  // Filter tasks to show only today's non-expired tasks
+  const todaysTasks = tasks.filter(task => {
+    if (task.date !== today) return false;
+    if (task.completed) return false;
+    
+    // Check if task time has passed (expired)
+    const taskTime = task.time;
+    let taskTime24 = taskTime;
+    if (taskTime.includes('PM') && !taskTime.includes('12')) {
+      const hour = parseInt(taskTime.split(':')[0]) + 12;
+      taskTime24 = hour + ':' + taskTime.split(':')[1].split(' ')[0] + ':00';
+    } else if (taskTime.includes('AM') && taskTime.includes('12')) {
+      taskTime24 = '00:' + taskTime.split(':')[1].split(' ')[0] + ':00';
+    } else if (taskTime.includes('AM')) {
+      taskTime24 = taskTime.split(' ')[0] + ':00';
+    } else if (taskTime.includes('PM') && taskTime.includes('12')) {
+      taskTime24 = '12:' + taskTime.split(':')[1].split(' ')[0] + ':00';
+    }
+    
+    // Only show non-expired tasks
+    return taskTime24 >= currentTime;
+  });
+  
+  // Sort today's tasks by date/time
+  const sortedTodaysTasks = sortTasksByDateTime(todaysTasks);
+
+  if (sortedTodaysTasks.length === 0) {
+    taskList.innerHTML = "<p style='text-align:center;color:gray;padding:20px;'>No tasks scheduled for today. Add a new task to get started!</p>";
+    updatePendingCount();
+    return;
+  }
+
+  sortedTodaysTasks.forEach((task, index) => {
+    const originalIndex = tasks.indexOf(task);
+    const taskEl = document.createElement("div");
+    taskEl.className = "task-item";
+    taskEl.innerHTML = `
+      <div class="task-main-row" style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <div class="task-title">${task.title}</div>
+          <div class="task-desc">${task.desc}</div>
+        </div>
+        <div class="task-buttons" style="display: flex; gap: 6px;">
+          <button class="complete-btn">✅</button>
+          <button class="delete-btn">🗑️</button>
+        </div>
+      </div>
+      <div class="task-time">📅 ${task.date} | 🕒 ${task.time} | ⏱️ ${task.duration || 'No duration'}</div>
+    `;
+    // ...existing button logic...
+    taskEl.querySelector('.complete-btn').onclick = function(e) {
+      e.stopPropagation();
+      taskEl.style.textDecoration = "line-through";
+      taskEl.style.opacity = "0.6";
+      tasks[originalIndex].completed = true;
+      saveTasksToStorage();
+      updatePendingCount();
+    };
+    taskEl.querySelector('.delete-btn').onclick = function(e) {
+      e.stopPropagation();
+      tasks.splice(originalIndex, 1);
+      saveTasksToStorage();
+      loadTasks();
+      updatePendingCount();
+      document.getElementById("sidebarTaskList").style.display = "none";
+    };
+    taskEl.onclick = () => showPopup(task, originalIndex);
+    taskList.appendChild(taskEl);
+  });
+  updatePendingCount();
+  updateOngoingTask();
+}
+
+// Update sorting in weekly, monthly, yearly popups
+function showWeeklyPopup() {
+  const weeklyTaskList = document.getElementById("weeklyTaskList");
+  weeklyTaskList.innerHTML = "";
+  
+  // Get current week's start and end dates
+  const today = new Date();
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
+  startOfWeek.setHours(0, 0, 0, 0);
+  
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6); // End of week (Saturday)
+  endOfWeek.setHours(23, 59, 59, 999);
+  
+  // Filter tasks for this week (excluding expired incomplete tasks)
+  const weeklyTasks = tasks.filter(task => {
+    const taskDate = new Date(task.date);
+    if (taskDate < startOfWeek || taskDate > endOfWeek) return false;
+    
+    // Skip completed tasks
+    if (task.completed) return false;
+    
+    // Skip expired incomplete tasks
+    const now = new Date();
+    const currentDate = now.toISOString().split('T')[0];
+    const currentTime = now.toTimeString().split(' ')[0];
+    
+    if (task.date === currentDate) {
+      // Check if task time has passed
+      const taskTime = task.time;
+      let taskTime24 = taskTime;
+      if (taskTime.includes('PM') && !taskTime.includes('12')) {
+        const hour = parseInt(taskTime.split(':')[0]) + 12;
+        taskTime24 = hour + ':' + taskTime.split(':')[1].split(' ')[0] + ':00';
+      } else if (taskTime.includes('AM') && taskTime.includes('12')) {
+        taskTime24 = '00:' + taskTime.split(':')[1].split(' ')[0] + ':00';
+      } else if (taskTime.includes('AM')) {
+        taskTime24 = taskTime.split(' ')[0] + ':00';
+      } else if (taskTime.includes('PM') && taskTime.includes('12')) {
+        taskTime24 = '12:' + taskTime.split(':')[1].split(' ')[0] + ':00';
+      }
+      
+      if (taskTime24 < currentTime) return false; // Skip expired tasks
+    } else if (task.date < currentDate) {
+      return false; // Skip past tasks
+    }
+    
+    return true;
+  });
+  
+  // Sort weekly tasks by date/time
+  const sortedWeeklyTasks = sortTasksByDateTime(weeklyTasks);
+  
+  if (sortedWeeklyTasks.length === 0) {
+    weeklyTaskList.innerHTML = "<p style='text-align:center;color:gray;padding:20px;'>No tasks scheduled for this week.</p>";
+    document.getElementById("weeklyPopup").classList.add("show");
+    return;
+  }
+  
+  sortedWeeklyTasks.forEach((task, index) => {
+    // Find the original index in the main tasks array
+    const originalIndex = tasks.indexOf(task);
+    
+    const taskEl = document.createElement("div");
+    taskEl.className = "task-item";
+    taskEl.style.margin = "10px 0";
+    taskEl.innerHTML = `
+  <div class="task-main-row" style="display: flex; justify-content: space-between; align-items: flex-start;">
+    <div>
+      <div class="task-title">${task.title}</div>
+      <div class="task-desc">${task.desc}</div>
+    </div>
+    <div class="task-buttons" style="display: flex; gap: 6px;">
+      <button class="complete-btn">✅</button>
+      <button class="delete-btn">🗑️</button>
+    </div>
+  </div>
+  <div class="task-time">📅 ${task.date} | 🕒 ${task.time} | ⏱️ ${task.duration || 'No duration'}</div>
+`;
+
+        // Complete button
+        taskEl.querySelector('.complete-btn').onclick = function(e) {
+          e.stopPropagation();
+          taskEl.style.textDecoration = "line-through";
+          taskEl.style.opacity = "0.6";
+          // Update the task as completed in the tasks array
+          tasks[originalIndex].completed = true;
+          saveTasksToStorage();
+          updatePendingCount();
+        };
+        // Delete button
+        taskEl.querySelector('.delete-btn').onclick = function(e) {
+          e.stopPropagation();
+          tasks.splice(originalIndex, 1);
+          saveTasksToStorage();
+          showWeeklyPopup(); // Refresh the weekly popup
+          updatePendingCount();
+          loadTasks(); // Refresh main task list
+        };
+        // Show popup on click (not on button click)
+        taskEl.onclick = () => showPopup(task, originalIndex);
+        weeklyTaskList.appendChild(taskEl);
+      });
+      
+      document.getElementById("weeklyPopup").classList.add("show");
+    }
+
+    function closeWeeklyPopup() {
+      document.getElementById("weeklyPopup").classList.remove("show");
+    }
+
+    function showMonthlyPopup() {
+      const monthlyTaskList = document.getElementById("monthlyTaskList");
+      monthlyTaskList.innerHTML = "";
+      
+      // Get current month's start and end dates
+      const today = new Date();
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      
+      const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      endOfMonth.setHours(23, 59, 59, 999);
+      
+      // Filter tasks for this month (excluding expired incomplete tasks)
+      const monthlyTasks = tasks.filter(task => {
+        const taskDate = new Date(task.date);
+        if (taskDate < startOfMonth || taskDate > endOfMonth) return false;
+        
+        // Skip completed tasks
+        if (task.completed) return false;
+        
+        // Skip expired incomplete tasks
+        const now = new Date();
+        const currentDate = now.toISOString().split('T')[0];
+        const currentTime = now.toTimeString().split(' ')[0];
+        
+        if (task.date === currentDate) {
+          // Check if task time has passed
+          const taskTime = task.time;
+          let taskTime24 = taskTime;
+          if (taskTime.includes('PM') && !taskTime.includes('12')) {
+            const hour = parseInt(taskTime.split(':')[0]) + 12;
+            taskTime24 = hour + ':' + taskTime.split(':')[1].split(' ')[0] + ':00';
+          } else if (taskTime.includes('AM') && taskTime.includes('12')) {
+            taskTime24 = '00:' + taskTime.split(':')[1].split(' ')[0] + ':00';
+          } else if (taskTime.includes('AM')) {
+            taskTime24 = taskTime.split(' ')[0] + ':00';
+          } else if (taskTime.includes('PM') && taskTime.includes('12')) {
+            taskTime24 = '12:' + taskTime.split(':')[1].split(' ')[0] + ':00';
+          }
+          
+          if (taskTime24 < currentTime) return false; // Skip expired tasks
+        } else if (task.date < currentDate) {
+          return false; // Skip past tasks
+        }
+        
+        return true;
+      });
+      
+      // Sort monthly tasks by date/time
+      const sortedMonthlyTasks = sortTasksByDateTime(monthlyTasks);
+      
+      if (sortedMonthlyTasks.length === 0) {
+        monthlyTaskList.innerHTML = "<p style='text-align:center;color:gray;padding:20px;'>No tasks scheduled for this month.</p>";
+        document.getElementById("monthlyPopup").classList.add("show");
+        return;
+      }
+      
+      sortedMonthlyTasks.forEach((task, index) => {
+        // Find the original index in the main tasks array
+        const originalIndex = tasks.indexOf(task);
+        
+        const taskEl = document.createElement("div");
+        taskEl.className = "task-item";
+        taskEl.style.margin = "10px 0";
+        taskEl.innerHTML = `
+  <div class="task-main-row" style="display: flex; justify-content: space-between; align-items: flex-start;">
+    <div>
+      <div class="task-title">${task.title}</div>
+      <div class="task-desc">${task.desc}</div>
+    </div>
+    <div class="task-buttons" style="display: flex; gap: 6px;">
+      <button class="complete-btn">✅</button>
+      <button class="delete-btn">🗑️</button>
+    </div>
+  </div>
+  <div class="task-time">📅 ${task.date} | 🕒 ${task.time} | ⏱️ ${task.duration || 'No duration'}</div>
+`;
+
+        // Complete button
+        taskEl.querySelector('.complete-btn').onclick = function(e) {
+          e.stopPropagation();
+          taskEl.style.textDecoration = "line-through";
+          taskEl.style.opacity = "0.6";
+          // Update the task as completed in the tasks array
+          tasks[originalIndex].completed = true;
+          saveTasksToStorage();
+          updatePendingCount();
+        };
+        // Delete button
+        taskEl.querySelector('.delete-btn').onclick = function(e) {
+          e.stopPropagation();
+          tasks.splice(originalIndex, 1);
+          saveTasksToStorage();
+          showMonthlyPopup(); // Refresh the monthly popup
+          updatePendingCount();
+          loadTasks(); // Refresh main task list
+        };
+        // Show popup on click (not on button click)
+        taskEl.onclick = () => showPopup(task, originalIndex);
+        monthlyTaskList.appendChild(taskEl);
+      });
+      
+      document.getElementById("monthlyPopup").classList.add("show");
+    }
+
+    function closeMonthlyPopup() {
+      document.getElementById("monthlyPopup").classList.remove("show");
+    }
+
+    function showYearlyPopup() {
+      const yearlyTaskList = document.getElementById("yearlyTaskList");
+      yearlyTaskList.innerHTML = "";
+      
+      // Get current year's start and end dates
+      const today = new Date();
+      const startOfYear = new Date(today.getFullYear(), 0, 1); // January 1st of the current year
+      startOfYear.setHours(0, 0, 0, 0);
+      
+      const endOfYear = new Date(today.getFullYear(), 11, 31); // December 31st of the current year
+      endOfYear.setHours(23, 59, 59, 999);
+      
+      // Filter tasks for this year (excluding expired incomplete tasks)
+      const yearlyTasks = tasks.filter(task => {
+        const taskDate = new Date(task.date);
+        if (taskDate < startOfYear || taskDate > endOfYear) return false;
+        
+        // Skip completed tasks
+        if (task.completed) return false;
+        
+        // Skip expired incomplete tasks
+        const now = new Date();
+        const currentDate = now.toISOString().split('T')[0];
+        const currentTime = now.toTimeString().split(' ')[0];
+        
+        if (task.date === currentDate) {
+          // Check if task time has passed
+          const taskTime = task.time;
+          let taskTime24 = taskTime;
+          if (taskTime.includes('PM') && !taskTime.includes('12')) {
+            const hour = parseInt(taskTime.split(':')[0]) + 12;
+            taskTime24 = hour + ':' + taskTime.split(':')[1].split(' ')[0] + ':00';
+          } else if (taskTime.includes('AM') && taskTime.includes('12')) {
+            taskTime24 = '00:' + taskTime.split(':')[1].split(' ')[0] + ':00';
+          } else if (taskTime.includes('AM')) {
+            taskTime24 = taskTime.split(' ')[0] + ':00';
+          } else if (taskTime.includes('PM') && taskTime.includes('12')) {
+            taskTime24 = '12:' + taskTime.split(':')[1].split(' ')[0] + ':00';
+          }
+          
+          if (taskTime24 < currentTime) return false; // Skip expired tasks
+        } else if (task.date < currentDate) {
+          return false; // Skip past tasks
+        }
+        
+        return true;
+      });
+      
+      // Sort yearly tasks by date/time
+      const sortedYearlyTasks = sortTasksByDateTime(yearlyTasks);
+      
+      if (sortedYearlyTasks.length === 0) {
+        yearlyTaskList.innerHTML = "<p style='text-align:center;color:gray;padding:20px;'>No tasks scheduled for this year.</p>";
+        document.getElementById("yearlyPopup").classList.add("show");
+        return;
+      }
+      
+      sortedYearlyTasks.forEach((task, index) => {
+        // Find the original index in the main tasks array
+        const originalIndex = tasks.indexOf(task);
+        
+        const taskEl = document.createElement("div");
+        taskEl.className = "task-item";
+        taskEl.style.margin = "10px 0";
+        taskEl.innerHTML = `
+  <div class="task-main-row" style="display: flex; justify-content: space-between; align-items: flex-start;">
+    <div>
+      <div class="task-title">${task.title}</div>
+      <div class="task-desc">${task.desc}</div>
+    </div>
+    <div class="task-buttons" style="display: flex; gap: 6px;">
+      <button class="complete-btn">✅</button>
+      <button class="delete-btn">🗑️</button>
+    </div>
+  </div>
+  <div class="task-time">📅 ${task.date} | 🕒 ${task.time} | ⏱️ ${task.duration || 'No duration'}</div>
+`;
+
+        // Complete button
+        taskEl.querySelector('.complete-btn').onclick = function(e) {
+          e.stopPropagation();
+          taskEl.style.textDecoration = "line-through";
+          taskEl.style.opacity = "0.6";
+          // Update the task as completed in the tasks array
+          tasks[originalIndex].completed = true;
+          saveTasksToStorage();
+          updatePendingCount();
+        };
+        // Delete button
+        taskEl.querySelector('.delete-btn').onclick = function(e) {
+          e.stopPropagation();
+          tasks.splice(originalIndex, 1);
+          saveTasksToStorage();
+          showYearlyPopup(); // Refresh the yearly popup
+          updatePendingCount();
+          loadTasks(); // Refresh main task list
+        };
+        // Show popup on click (not on button click)
+        taskEl.onclick = () => showPopup(task, originalIndex);
+        yearlyTaskList.appendChild(taskEl);
+      });
+      
+      document.getElementById("yearlyPopup").classList.add("show");
+    }
+
+    function closeYearlyPopup() {
+      document.getElementById("yearlyPopup").classList.remove("show");
+    }
+
+    function showCompletedTasksPopup() {
+      const completedTaskList = document.getElementById("completedTaskList");
+      completedTaskList.innerHTML = "";
+      
+      // Filter only completed tasks
+      const completedTasks = tasks.filter(task => task.completed);
+      
+      if (completedTasks.length === 0) {
+        completedTaskList.innerHTML = "<p style='text-align:center;color:gray;padding:20px;'>No completed tasks found.</p>";
+        document.getElementById("completedPopup").classList.add("show");
+        return;
+      }
+      
+      // Sort tasks by date (most recent first)
+      completedTasks.sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      completedTasks.forEach((task, index) => {
+        // Find the original index in the main tasks array
+        const originalIndex = tasks.indexOf(task);
+        
+        const taskEl = document.createElement("div");
+        taskEl.className = "task-item";
+        taskEl.style.margin = "10px 0";
+        taskEl.style.opacity = "0.8";
+        
+        taskEl.innerHTML = `
+  <div class="task-main-row" style="display: flex; justify-content: space-between; align-items: flex-start;">
+    <div>
+      <div class="task-title">${task.title}</div>
+      <div class="task-desc">${task.desc}</div>
+    </div>
+  </div>
+  <div class="task-time">📅 ${task.date} | 🕒 ${task.time} | ✅ Completed</div>
+`;
+        
+        // No popup on click for completed tasks - read only
+        completedTaskList.appendChild(taskEl);
+      });
+      
+      document.getElementById("completedPopup").classList.add("show");
+    }
+
+    function closeCompletedPopup() {
+      document.getElementById("completedPopup").classList.remove("show");
+    }
+
+    function showIncompletedTasksPopup() {
+      const incompletedTaskList = document.getElementById("incompletedTaskList");
+      incompletedTaskList.innerHTML = "";
+      
+      // Get current date and time
+      const now = new Date();
+      const currentDate = now.toISOString().split('T')[0];
+      const currentTime = now.toTimeString().split(' ')[0]; // HH:MM:SS format
+      
+      // Filter tasks that are not completed and whose time has ended
+      const expiredIncompleteTasks = tasks.filter(task => {
+        if (task.completed) return false; // Skip completed tasks
+        
+        const taskDate = task.date;
+        const taskTime = task.time;
+        
+        // Check if task date is today and time has passed
+        if (taskDate === currentDate) {
+          // Convert task time to 24-hour format for comparison
+          let taskTime24 = taskTime;
+          if (taskTime.includes('PM') && !taskTime.includes('12')) {
+            const hour = parseInt(taskTime.split(':')[0]) + 12;
+            taskTime24 = hour + ':' + taskTime.split(':')[1].split(' ')[0] + ':00';
+          } else if (taskTime.includes('AM') && taskTime.includes('12')) {
+            taskTime24 = '00:' + taskTime.split(':')[1].split(' ')[0] + ':00';
+          } else if (taskTime.includes('AM')) {
+            taskTime24 = taskTime.split(' ')[0] + ':00';
+          } else if (taskTime.includes('PM') && taskTime.includes('12')) {
+            taskTime24 = '12:' + taskTime.split(':')[1].split(' ')[0] + ':00';
+          }
+          
+          // Check if task time has passed
+          return taskTime24 < currentTime;
+        }
+        
+        // Check if task date is in the past
+        return taskDate < currentDate;
+      });
+      
+      if (expiredIncompleteTasks.length === 0) {
+        incompletedTaskList.innerHTML = "<p style='text-align:center;color:gray;padding:20px;'>No expired incomplete tasks found. Great job completing all your tasks on time!</p>";
+        document.getElementById("incompletedPopup").classList.add("show");
+        return;
+      }
+      
+      // Sort tasks by date (most recent first)
+      expiredIncompleteTasks.sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      expiredIncompleteTasks.forEach((task, index) => {
+        // Find the original index in the main tasks array
+        const originalIndex = tasks.indexOf(task);
+        
+        const taskEl = document.createElement("div");
+        taskEl.className = "task-item";
+        taskEl.style.margin = "10px 0";
+        taskEl.style.borderLeft = "5px solid #ff6b6b"; // Red border for expired tasks
+        
+        taskEl.innerHTML = `
+  <div class="task-main-row" style="display: flex; justify-content: space-between; align-items: flex-start;">
+    <div>
+      <div class="task-title">${task.title}</div>
+      <div class="task-desc">${task.desc}</div>
+    </div>
+  </div>
+  <div class="task-time">📅 ${task.date} | Starting Time: ${task.time} | Duration: ${task.duration || 'No duration'} | ⏰ Expired</div>
+`;
+
+        // No popup on click for incomplete tasks - read only
+        incompletedTaskList.appendChild(taskEl);
+      });
+      
+      document.getElementById("incompletedPopup").classList.add("show");
+    }
+
+    function closeIncompletedPopup() {
+      document.getElementById("incompletedPopup").classList.remove("show");
+    }
+
+    function showNotification(message) {
+      // Create notification element
+      const notification = document.createElement("div");
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #ff6b6b;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10000;
+        font-size: 14px;
+        max-width: 300px;
+        word-wrap: break-word;
+        animation: slideIn 0.3s ease-out;
+      `;
+      notification.textContent = message;
+      
+      // Add animation CSS
+      const style = document.createElement("style");
+      style.textContent = `
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(100%); opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
+      
+      // Add to page
+      document.body.appendChild(notification);
+      
+      // Remove after 3 seconds
+      setTimeout(() => {
+        notification.style.animation = "slideOut 0.3s ease-in";
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+          }
+        }, 300);
+      }, 3000);
+    }
+
+    function loadTasks() {
+      taskList.innerHTML = "";
+
+      // Get today's date in YYYY-MM-DD format
+      const today = new Date().toISOString().split('T')[0];
+      const currentTime = new Date().toTimeString().split(' ')[0]; // HH:MM:SS format
+      
+      // Filter tasks to show only today's non-expired tasks
+      const todaysTasks = tasks.filter(task => {
+        if (task.date !== today) return false;
+        if (task.completed) return false;
+        
+        // Check if task time has passed (expired)
+        const taskTime = task.time;
+        let taskTime24 = taskTime;
+        if (taskTime.includes('PM') && !taskTime.includes('12')) {
+          const hour = parseInt(taskTime.split(':')[0]) + 12;
+          taskTime24 = hour + ':' + taskTime.split(':')[1].split(' ')[0] + ':00';
+        } else if (taskTime.includes('AM') && taskTime.includes('12')) {
+          taskTime24 = '00:' + taskTime.split(':')[1].split(' ')[0] + ':00';
+        } else if (taskTime.includes('AM')) {
+          taskTime24 = taskTime.split(' ')[0] + ':00';
+        } else if (taskTime.includes('PM') && taskTime.includes('12')) {
+          taskTime24 = '12:' + taskTime.split(':')[1].split(' ')[0] + ':00';
+        }
+        
+        // Only show non-expired tasks
+        return taskTime24 >= currentTime;
+      });
+      
+      // Sort today's tasks by date/time
+      const sortedTodaysTasks = sortTasksByDateTime(todaysTasks);
+
+      if (sortedTodaysTasks.length === 0) {
+        taskList.innerHTML = "<p style='text-align:center;color:gray;padding:20px;'>No tasks scheduled for today. Add a new task to get started!</p>";
+        updatePendingCount();
+        return;
+      }
+
+      sortedTodaysTasks.forEach((task, index) => {
+        const originalIndex = tasks.indexOf(task);
+        const taskEl = document.createElement("div");
+        taskEl.className = "task-item";
+        taskEl.innerHTML = `
+          <div class="task-main-row" style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <div class="task-title">${task.title}</div>
+              <div class="task-desc">${task.desc}</div>
+            </div>
+            <div class="task-buttons" style="display: flex; gap: 6px;">
+              <button class="complete-btn">✅</button>
+              <button class="delete-btn">🗑️</button>
+            </div>
+          </div>
+          <div class="task-time">📅 ${task.date} | 🕒 ${task.time} | ⏱️ ${task.duration || 'No duration'}</div>
+        `;
+        // ...existing button logic...
+        taskEl.querySelector('.complete-btn').onclick = function(e) {
+          e.stopPropagation();
+          taskEl.style.textDecoration = "line-through";
+          taskEl.style.opacity = "0.6";
+          tasks[originalIndex].completed = true;
+          saveTasksToStorage();
+          updatePendingCount();
+        };
+        taskEl.querySelector('.delete-btn').onclick = function(e) {
+          e.stopPropagation();
+          tasks.splice(originalIndex, 1);
+          saveTasksToStorage();
+          loadTasks();
+          updatePendingCount();
+          document.getElementById("sidebarTaskList").style.display = "none";
+        };
+        taskEl.onclick = () => showPopup(task, originalIndex);
+        taskList.appendChild(taskEl);
+      });
+      updatePendingCount();
+      updateOngoingTask();
+    }
+
+    function toggleSidebar() {
+      sidebar.classList.toggle("show");
+    }
+
+    function showPopup(task, index) {
+      currentEditIndex = index;
+      document.getElementById("popupTitleDisplay").innerText = task.title;
+      document.getElementById("popupDescDisplay").innerText = task.desc;
+      document.getElementById("popupTimeDisplay").innerText = `Date: ${task.date} | Time: ${task.time}`;
+      document.getElementById("popup").classList.add("show");
+
+      document.getElementById("popupEditForm").classList.add("hidden");
+      document.getElementById("popupTitleDisplay").style.display = "block";
+      document.getElementById("popupDescDisplay").style.display = "block";
+      document.getElementById("popupTimeDisplay").style.display = "block";
+      document.getElementById("editBtn").style.display = "inline-block";
+    }
+
+    function closePopup() {
+      document.getElementById("popup").classList.remove("show");
+    }
+
+    function editTask() {
+      const task = tasks[currentEditIndex];
+      document.getElementById("editTitle").value = task.title;
+      document.getElementById("editDesc").value = task.desc;
+      document.getElementById("editDate").value = task.date;
+      document.getElementById("editTime").value = task.time;
+
+      document.getElementById("popupEditForm").classList.remove("hidden");
+      document.getElementById("popupTitleDisplay").style.display = "none";
+      document.getElementById("popupDescDisplay").style.display = "none";
+      document.getElementById("popupTimeDisplay").style.display = "none";
+      document.getElementById("editBtn").style.display = "none";
+    }
+
+    function saveTask() {
+      const title = document.getElementById("editTitle").value.trim();
+      const desc = document.getElementById("editDesc").value.trim();
+      const date = document.getElementById("editDate").value;
+      const time = document.getElementById("editTime").value.trim();
+
+      if (!title || !desc || !date || !time) {
+        alert("All fields are required!");
+        return;
+      }
+
+      tasks[currentEditIndex] = { title, desc, date, time };
+      saveTasksToStorage();
+      loadTasks();
+      closePopup();
+    }
+
+    // Add Task Popup
+    function openAddPopup() {
+      document.getElementById("addPopup").classList.add("show");
+      document.getElementById("newTitle").value = "";
+      document.getElementById("newDesc").value = "";
+      // Set default date to today and minimum date to today (only future dates allowed)
+      const today = new Date().toISOString().split('T')[0];
+      const dateInput = document.getElementById("newDate");
+      dateInput.value = today;
+      dateInput.min = today; // Only allow future dates
+      document.getElementById("newTime").value = "";
+      document.getElementById("newDuration").value = "";
+    }
+
+    function closeAddPopup() {
+      document.getElementById("addPopup").classList.remove("show");
+    }
+
+    function submitNewTask() {
+      const title = document.getElementById("newTitle").value.trim();
+      const desc = document.getElementById("newDesc").value.trim();
+      const date = document.getElementById("newDate").value;
+      let time = document.getElementById("newTime").value.trim();
+      let duration = document.getElementById("newDuration").value.trim();
+
+      if (!title || !desc || !date || !time || !duration) {
+        alert("Please fill in all task details.");
+        return;
+      }
+
+      // Validate time format (hh:mm:ss)
+      const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/;
+      if (!timeRegex.test(time)) {
+        alert("Please enter time in hh:mm:ss format (e.g., 09:30:00, 14:45:30)");
+        return;
+      }
+
+      // Validate duration format (hh:mm:ss)
+      const durationRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/;
+      if (!durationRegex.test(duration)) {
+        alert("Please enter duration in hh:mm:ss format (e.g., 02:30:00, 01:45:30)");
+        return;
+      }
+
+      // Check if selected date is in the past
+      const selectedDate = new Date(date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+      
+      if (selectedDate < today) {
+        alert("Please select a future date for your task.");
+        return;
+      }
+
+      tasks.push({ title, desc, date, time, duration });
+      saveTasksToStorage();
+      loadTasks();
+      closeAddPopup();
+      updatePendingCount();
+    }
+
+    document.getElementById("manageTasksBtn").onclick = function() {
+      const sidebarTaskList = document.getElementById("sidebarTaskList");
+      if (sidebarTaskList.style.display === "none") {
+        // Show time-based options
+        sidebarTaskList.innerHTML = "";
+        
+        const timeOptions = ["This Week", "This Month", "This Year"];
+        timeOptions.forEach(option => {
+          const li = document.createElement("li");
+          li.textContent = option;
+          li.style.cursor = "pointer";
+          li.onclick = function(e) {
+            e.stopPropagation();
+            // Handle time-based filtering here
+            if (option === "This Week") {
+              showWeeklyPopup();
+            } else if (option === "This Month") {
+              showMonthlyPopup();
+            } else if (option === "This Year") {
+              showYearlyPopup(); // Show yearly tasks
+            }
+            sidebar.classList.remove("show");
+            sidebarTaskList.style.display = "none";
+          };
+          sidebarTaskList.appendChild(li);
+        });
+        sidebarTaskList.style.display = "block";
+      } else {
+        // Hide the list
+        sidebarTaskList.style.display = "none";
+      }
+    };
+
+    // Example user info
+const user = {
+  name: "Mohin",
+  email: "mohin@email.com"
+};
+
+document.querySelector("#sidebar li").onclick = function() {
+  showProfilePopup();
+};
+
+    document.getElementById("previousTasksBtn").onclick = function() {
+      const previousTasksList = document.getElementById("previousTasksList");
+      if (previousTasksList.style.display === "none") {
+        // Show the submenu options
+        previousTasksList.innerHTML = "";
+        
+        const taskOptions = ["✅ Completed Tasks", "⏰ Incompleted Tasks"];
+        taskOptions.forEach(option => {
+          const li = document.createElement("li");
+          li.textContent = option;
+          li.style.cursor = "pointer";
+          li.style.padding = "10px 20px";
+          li.style.fontSize = "14px";
+          li.onclick = function(e) {
+            e.stopPropagation();
+            // Handle task filtering here
+            if (option === "✅ Completed Tasks") {
+              showCompletedTasksPopup();
+            } else if (option === "⏰ Incompleted Tasks") {
+              showIncompletedTasksPopup();
+            }
+            sidebar.classList.remove("show");
+            previousTasksList.style.display = "none";
+          };
+          previousTasksList.appendChild(li);
+        });
+        previousTasksList.style.display = "block";
+      } else {
+        // Hide the list
+        previousTasksList.style.display = "none";
+      }
+    };
+
+function showProfilePopup() {
+  document.getElementById("profileName").textContent = localStorage.getItem('username') || "User";
+  document.getElementById("profileEmail").textContent = localStorage.getItem('email') || "Not set";
+  document.getElementById("profilePopup").classList.add("show");
+}
+
+function closeProfilePopup() {
+  document.getElementById("profilePopup").classList.remove("show");
+}
+
+    // Only add sample tasks if no tasks exist in localStorage
+    if (tasks.length === 3) { // If only the default 3 tasks exist
+      addSampleWeeklyTasks(); // Add sample weekly tasks
+      saveTasksToStorage(); // Save the sample tasks
+    }
+    loadTasks();
+    updatePendingCount();
+    updateOngoingTask();
+    
+    // Update ongoing task every minute
+    setInterval(updateOngoingTask, 60000);
+    
+    // Automatic deletion of expired tasks is now disabled
+    // Tasks will only be deleted manually by the user
+    // setInterval(deleteExpiredTasks, 60000); // 60000ms = 1 minute
+    // deleteExpiredTasks();
+    function showSearchPopup(filteredTasks) {
+  // Create a new popup container if not exists
+  let searchPopup = document.getElementById("searchPopup");
+  if (!searchPopup) {
+    searchPopup = document.createElement("div");
+    searchPopup.id = "searchPopup";
+    searchPopup.className = "popup";
+    searchPopup.innerHTML = `
+      <div class="popup-content" style="max-width: 400px; max-height: 80vh; overflow-y: auto;">
+        <span class="close-btn" onclick="closeSearchPopup()">&times;</span>
+        <h3 style="margin-bottom:20px;">Search Results</h3>
+        <div id="searchTaskList"></div>
+      </div>
+    `;
+    document.body.appendChild(searchPopup);
+  }
+
+  // Fill the popup with the search results as a list
+  const searchTaskList = searchPopup.querySelector("#searchTaskList");
+  searchTaskList.innerHTML = "";
+
+  // Sort the filtered tasks by date/time (earliest first)
+  const sortedTasks = sortTasksByDateTime(filteredTasks);
+
+  if (sortedTasks.length === 0) {
+    searchTaskList.innerHTML = "<p style='text-align:center;color:gray;padding:20px;'>No matching tasks found.</p>";
+  } else {
+    sortedTasks.forEach((task, idx) => {
+      const taskEl = document.createElement("div");
+      taskEl.className = "task-item";
+      taskEl.style.margin = "10px 0";
+      taskEl.style.display = "flex";
+      taskEl.style.justifyContent = "space-between";
+      taskEl.style.alignItems = "flex-start";
+      taskEl.style.background = "#f9f9f9";
+      taskEl.style.borderRadius = "8px";
+      taskEl.style.boxShadow = "0 1px 4px rgba(0,0,0,0.04)";
+      taskEl.style.padding = "14px 16px";
+      taskEl.style.transition = "background 0.2s";
+      taskEl.onmouseover = () => taskEl.style.background = "#f1f1f1";
+      taskEl.onmouseout = () => taskEl.style.background = "#f9f9f9";
+
+      taskEl.innerHTML = `
+        <div>
+          <div class="task-title" style="font-weight:600;font-size:16px;">${task.title}</div>
+          <div class="task-desc" style="color:#555;font-size:14px;margin:4px 0 8px 0;">${task.desc}</div>
+          <div class="task-time" style="font-size:13px;color:#888;">
+            <span style="margin-right:8px;">📅 ${task.date}</span>
+            <span style="margin-right:8px;">| 🕒 ${task.time}</span>
+            <span>| ⏱️ ${task.duration || 'No duration'}</span>
+          </div>
+        </div>
+        <div class="task-buttons" style="display: flex; flex-direction: row; gap: 6px; align-items: flex-start;">
+          <button class="complete-btn" style="font-size:18px;padding:4px 8px;">✅</button>
+          <button class="delete-btn" style="font-size:18px;padding:4px 8px;">🗑️</button>
+        </div>
+      `;
+
+      // Complete button
+      taskEl.querySelector('.complete-btn').onclick = function(e) {
+        e.stopPropagation();
+        taskEl.style.textDecoration = "line-through";
+        taskEl.style.opacity = "0.6";
+        // Update the task as completed in the tasks array
+        tasks[tasks.indexOf(task)].completed = true;
+        saveTasksToStorage();
+        showSearchPopup(sortedTasks.filter(t => !t.completed)); // Refresh popup
+        updatePendingCount();
+        loadTasks();
+      };
+      // Delete button
+      taskEl.querySelector('.delete-btn').onclick = function(e) {
+        e.stopPropagation();
+        tasks.splice(tasks.indexOf(task), 1);
+        saveTasksToStorage();
+        showSearchPopup(sortedTasks.filter(t => tasks.includes(t))); // Refresh popup
+        updatePendingCount();
+        loadTasks();
+      };
+      // Show popup on click (not on button click)
+      taskEl.onclick = () => showPopup(task, tasks.indexOf(task));
+      searchTaskList.appendChild(taskEl);
+    });
+  }
+
+  searchPopup.classList.add("show");
+}
+
+function closeSearchPopup() {
+  const searchPopup = document.getElementById("searchPopup");
+  if (searchPopup) searchPopup.classList.remove("show");
+}
+
+// Replace your searchTasks function with this:
+function searchTasks() {
+  const keyword = document.getElementById("searchInput").value.trim().toLowerCase();
+  const now = new Date();
+  const currentDate = now.toISOString().split('T')[0];
+  const currentTime = now.toTimeString().split(' ')[0];
+
+  const filteredTasks = tasks.filter(task => {
+    if (!task.title.toLowerCase().includes(keyword)) return false;
+    if (task.completed) return false;
+    if (task.date === currentDate) {
+      let taskTime24 = task.time;
+      if (taskTime24.includes('PM') && !taskTime24.includes('12')) {
+        const hour = parseInt(taskTime24.split(':')[0]) + 12;
+        taskTime24 = hour + ':' + taskTime24.split(':')[1].split(' ')[0] + ':00';
+      } else if (taskTime24.includes('AM') && taskTime24.includes('12')) {
+        taskTime24 = '00:' + taskTime24.split(':')[1].split(' ')[0] + ':00';
+      } else if (taskTime24.includes('AM')) {
+        taskTime24 = taskTime24.split(' ')[0] + ':00';
+      } else if (taskTime24.includes('PM') && taskTime24.includes('12')) {
+        taskTime24 = '12:' + taskTime24.split(':')[1].split(' ')[0] + ':00';
+      }
+      if (taskTime24 < currentTime) return false;
+    } else if (task.date < currentDate) {
+      return false;
+    }
+    return true;
+  });
+
+  // Show results in a popup, not in Today's Task section
+  showSearchPopup(filteredTasks);
+}
+
+// ...existing code...
+
+    // Show logout popup when clicking 'Logout' in sidebar
+document.querySelector("#sidebar li:last-child").onclick = function() {
+  document.getElementById("logoutPopup").classList.add("show");
+};
+
+// Handle Yes/No buttons
+document.getElementById("logoutYesBtn").onclick = function() {
+  document.getElementById("logoutPopup").classList.remove("show");
+  // Redirect to index.html on logout
+  window.location.href = "index.html";
+};
+
+document.getElementById("logoutNoBtn").onclick = function() {
+  document.getElementById("logoutPopup").classList.remove("show");
+};
+
+    // Set greeting name from localStorage
+    const greetingName = document.getElementById("greetingName");
+    const storedUsername = localStorage.getItem('username');
+    greetingName.textContent = storedUsername ? storedUsername : "User";
+
+  </script>
+</body>
+</html>
