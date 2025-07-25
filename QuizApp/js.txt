@@ -1,0 +1,98 @@
+let currentQuestionIndex = 0;
+let selectedQuestions = [];
+let score = 0;
+const totalQuestions = 5;
+
+const startBtn = document.getElementById('start-btn');
+const quizScreen = document.getElementById('quiz-screen');
+const startScreen = document.getElementById('start-screen');
+const resultScreen = document.getElementById('result-screen');
+const questionText = document.getElementById('question-text');
+const optionsContainer = document.getElementById('options-container');
+const submitBtn = document.getElementById('submit-btn');
+const resultText = document.getElementById('result-text');
+const restartBtn = document.getElementById('restart-btn');
+
+startBtn.addEventListener('click', () => {
+  startScreen.classList.add('hidden');
+  quizScreen.classList.remove('hidden');
+  startQuiz();
+});
+
+submitBtn.addEventListener('click', () => {
+  const selectedOption = document.querySelector('input[name="option"]:checked');
+  if (!selectedOption) return alert("Please select an option!");
+
+  if (selectedOption.value === selectedQuestions[currentQuestionIndex].answer) {
+    score++;
+  }
+
+  currentQuestionIndex++;
+  if (currentQuestionIndex < totalQuestions) {
+    loadQuestion(currentQuestionIndex);
+  } else {
+    showResult();
+  }
+});
+
+restartBtn.addEventListener('click', () => {
+  score = 0;
+  currentQuestionIndex = 0;
+  resultScreen.classList.add('hidden');
+  quizScreen.classList.remove('hidden');
+  startQuiz();
+});
+
+function startQuiz() {
+  // Fetch 5 random questions from Open Trivia DB
+  fetch(`https://opentdb.com/api.php?amount=${totalQuestions}&type=multiple`)
+    .then(response => response.json())
+    .then(data => {
+      selectedQuestions = data.results.map(q => ({
+        question: decodeHTML(q.question),
+        options: shuffleArray([q.correct_answer, ...q.incorrect_answers].map(decodeHTML)),
+        answer: decodeHTML(q.correct_answer)
+      }));
+      currentQuestionIndex = 0;
+      score = 0;
+      loadQuestion(currentQuestionIndex);
+    })
+    .catch(() => {
+      questionText.innerText = 'Failed to load questions. Please try again.';
+      optionsContainer.innerHTML = '';
+      submitBtn.disabled = true;
+    });
+}
+
+function loadQuestion(index) {
+  optionsContainer.innerHTML = "";
+  const q = selectedQuestions[index];
+  questionText.innerText = `Q${index + 1}: ${q.question}`;
+  q.options.forEach(option => {
+    const label = document.createElement('label');
+    label.innerHTML = `
+      <input type="radio" name="option" value="${option}">${option}
+    `;
+    optionsContainer.appendChild(label);
+  });
+  submitBtn.disabled = false;
+}
+
+function showResult() {
+  quizScreen.classList.add('hidden');
+  resultScreen.classList.remove('hidden');
+  resultText.innerText = `You scored ${score} out of ${totalQuestions}!`;
+}
+
+// Utility to decode HTML entities from API
+function decodeHTML(html) {
+  var txt = document.createElement('textarea');
+  txt.innerHTML = html;
+  return txt.value;
+}
+
+// Utility to shuffle an array
+function shuffleArray(array) {
+  return array.sort(() => Math.random() - 0.5);
+}
+  
